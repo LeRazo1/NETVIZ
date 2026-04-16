@@ -70,7 +70,7 @@ export default function App() {
       if (!type) return;
 
       const position: XYPosition = {
-        x: event.clientX - 240, 
+        x: event.clientX - 320, // Adjust for sidebar width (w-80)
         y: event.clientY - 40,
       };
 
@@ -98,7 +98,6 @@ export default function App() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  // Node Selection and Editing
   const selectedNode = useMemo(() => 
     nodes.find((n) => n.id === selectedNodeId), 
   [nodes, selectedNodeId]);

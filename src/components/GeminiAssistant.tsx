@@ -3,7 +3,18 @@ import { GoogleGenAI } from "@google/genai";
 import { Sparkles, Loader2, Send } from 'lucide-react';
 import { Node, Edge } from '@xyflow/react';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiClient: GoogleGenAI | null = null;
+
+function getAiClient() {
+  if (!aiClient) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not defined in environment variables.");
+    }
+    aiClient = new GoogleGenAI({ apiKey });
+  }
+  return aiClient;
+}
 
 interface Props {
   nodes: Node[];
@@ -17,6 +28,7 @@ export function GeminiAssistant({ nodes, edges }: Props) {
   const analyzeNetwork = async () => {
     setLoading(true);
     try {
+      const ai = getAiClient();
       const networkData = {
         devices: nodes.map(n => ({
           label: n.data.label,
@@ -45,7 +57,7 @@ export function GeminiAssistant({ nodes, edges }: Props) {
       setAdvice(response.text || "No insights found.");
     } catch (error) {
       console.error(error);
-      setAdvice("Error connecting to Gemini. Please check your network config.");
+      setAdvice(error instanceof Error ? error.message : "Error connecting to Gemini. Please check your network config.");
     } finally {
       setLoading(false);
     }
