@@ -1,0 +1,21 @@
+{
+  "name": "NetViz Network Topology",
+  "short_name": "NetViz",
+  "description": "Visualize and design network topologies.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E4E3E0",
+  "theme_color": "#141414",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/netviz/192/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://picsum.photos/seed/netviz/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

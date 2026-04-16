@@ -1,0 +1,6 @@
+{
+  "name": "NetViz - Network Topology Designer",
+  "description": "A professional PWA for designing, visualizing, and simulating network topologies with routers, switches, and hosts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
