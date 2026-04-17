@@ -1,6 +1,6 @@
 {
   "name": "NetViz - Network Topology Designer",
-  "description": "A professional PWA for designing, visualizing, and simulating network topologies with routers, switches, and hosts.",
+  "description": "A professional PWA for designing, visualizing, and simulating network topologies. Tip for iOS Safari users: If you see a loading loop, go to Settings > Safari and turn off 'Prevent Cross-Site Tracking' or open the app in a new tab.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
