@@ -1,5 +1,17 @@
+import React from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { Router, Server, Laptop, Cloud, Hash } from 'lucide-react';
+import { 
+  Router, 
+  Server, 
+  Laptop, 
+  Cloud, 
+  Hash, 
+  Shield, 
+  Wifi, 
+  Smartphone, 
+  Printer, 
+  Activity 
+} from 'lucide-react';
 import { NetworkDeviceData } from '../types';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -8,17 +20,29 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const nodeIcons = {
+const nodeIcons: Record<string, React.ReactNode> = {
   router: <Router className="w-6 h-6" />,
   switch: <Hash className="w-6 h-6" />,
+  firewall: <Shield className="w-6 h-6" />,
+  access_point: <Wifi className="w-6 h-6" />,
   host: <Laptop className="w-6 h-6" />,
+  server: <Server className="w-6 h-6" />,
+  mobile: <Smartphone className="w-6 h-6" />,
+  printer: <Printer className="w-6 h-6" />,
+  iot: <Activity className="w-6 h-6" />,
   cloud: <Cloud className="w-6 h-6" />,
 };
 
-const nodeColors = {
+const nodeColors: Record<string, string> = {
   router: 'bg-red-500/10 border-red-500 text-red-500',
   switch: 'bg-blue-500/10 border-blue-500 text-blue-500',
+  firewall: 'bg-orange-500/10 border-orange-500 text-orange-500',
+  access_point: 'bg-indigo-500/10 border-indigo-500 text-indigo-500',
   host: 'bg-emerald-500/10 border-emerald-500 text-emerald-500',
+  server: 'bg-purple-500/10 border-purple-500 text-purple-500',
+  mobile: 'bg-pink-500/10 border-pink-500 text-pink-500',
+  printer: 'bg-gray-500/10 border-gray-500 text-gray-500',
+  iot: 'bg-yellow-500/10 border-yellow-500 text-yellow-500',
   cloud: 'bg-sky-400/10 border-sky-400 text-sky-400',
 };
 

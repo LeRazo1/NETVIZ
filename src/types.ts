@@ -1,4 +1,4 @@
-export type DeviceType = 'router' | 'switch' | 'host' | 'cloud';
+export type DeviceType = 'router' | 'switch' | 'firewall' | 'access_point' | 'host' | 'server' | 'mobile' | 'printer' | 'iot' | 'cloud';
 
 export interface DeviceInterface {
   id: string;

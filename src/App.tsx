@@ -24,7 +24,15 @@ import {
   Trash2,
   Share2,
   FileCode,
-  Network
+  Network,
+  Menu,
+  X,
+  Shield,
+  Wifi,
+  Server,
+  Smartphone,
+  Printer,
+  Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'react-hot-toast';
@@ -48,6 +56,7 @@ export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Connection logic
   const onConnect: OnConnect = useCallback((params) => {
@@ -67,11 +76,15 @@ export default function App() {
 
       const type = event.dataTransfer.getData('application/reactflow') as DeviceType;
 
-      if (!type) return;
+      if (!type) {
+        // Handle mobile tap-to-add if drag-drop data is missing
+        return;
+      }
 
+      const rect = event.currentTarget.getBoundingClientRect();
       const position: XYPosition = {
-        x: event.clientX - 320, // Adjust for sidebar width (w-80)
-        y: event.clientY - 40,
+        x: event.clientX - rect.left - 50, 
+        y: event.clientY - rect.top - 50,
       };
 
       const newNode: Node = {
@@ -89,6 +102,7 @@ export default function App() {
       };
 
       setNodes((nds) => nds.concat(newNode));
+      if (window.innerWidth < 1024) setIsSidebarOpen(false);
     },
     [nodes, setNodes]
   );
@@ -97,6 +111,26 @@ export default function App() {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
+
+  // Helper for mobile tap-to-add
+  const addDeviceAtCenter = (type: DeviceType) => {
+    const newNode: Node = {
+      id: `node_${Date.now()}`,
+      type: 'networkNode',
+      position: { x: window.innerWidth / 2 - 40, y: window.innerHeight / 2 - 40 },
+      data: { 
+        label: `${type.charAt(0).toUpperCase() + type.slice(1)} ${nodes.length + 1}`,
+        type,
+        interfaces: [
+          { id: 'eth0', name: 'eth0', ip: '', subnetMask: '255.255.255.0', macAddress: generateMAC(), isConnected: false }
+        ],
+        os: 'NetOS v1.0'
+      },
+    };
+    setNodes((nds) => nds.concat(newNode));
+    toast.success(`Broadcasting ${type}...`);
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+  };
 
   const selectedNode = useMemo(() => 
     nodes.find((n) => n.id === selectedNodeId), 
@@ -137,11 +171,33 @@ export default function App() {
     <div className="flex h-screen w-full bg-[#E4E3E0] text-[#141414] font-sans overflow-hidden select-none">
       <Toaster position="bottom-right" />
       
+      {/* Mobile Backdrop */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Toolbox Sidebar */}
-      <aside className="w-80 border-r border-[#141414] bg-[#E4E3E0] flex flex-col z-20 overflow-hidden">
-        <div className="p-6 border-b border-[#141414] flex items-center gap-2">
-          <Network className="w-8 h-8 text-blue-600" />
-          <h1 className="font-serif italic text-xl font-bold tracking-tight">NetViz.adm</h1>
+      <aside className={`
+        fixed inset-y-0 left-0 w-80 border-r border-[#141414] bg-[#E4E3E0] flex flex-col z-50 transition-transform duration-300 transform
+        ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+        lg:relative lg:translate-x-0 lg:shadow-none
+      `}>
+        <div className="p-6 border-b border-[#141414] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Network className="w-8 h-8 text-blue-600" />
+            <h1 className="font-serif italic text-xl font-bold tracking-tight">NetViz.adm</h1>
+          </div>
+          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2">
+            <X className="w-6 h-6" />
+          </button>
         </div>
 
         <div className="p-6 flex-1 overflow-y-auto space-y-8 scrollbar-hide">
@@ -151,18 +207,38 @@ export default function App() {
               <div 
                 draggable 
                 onDragStart={(e) => onDragStart(e, 'router')}
-                className="flex flex-col items-center gap-2 p-3 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50"
+                onClick={() => addDeviceAtCenter('router')}
+                className="flex flex-col items-center gap-2 p-4 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50 touch-manipulation"
               >
-                <RouterIcon className="w-5 h-5" />
-                <span className="text-[9px] font-mono">ROUTER</span>
+                <RouterIcon className="w-6 h-6" />
+                <span className="text-[10px] font-mono">ROUTER</span>
               </div>
               <div 
                 draggable 
                 onDragStart={(e) => onDragStart(e, 'switch')}
-                className="flex flex-col items-center gap-2 p-3 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50"
+                onClick={() => addDeviceAtCenter('switch')}
+                className="flex flex-col items-center gap-2 p-4 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50 touch-manipulation"
               >
-                <Cpu className="w-5 h-5" />
-                <span className="text-[9px] font-mono">SWITCH</span>
+                <Cpu className="w-6 h-6" />
+                <span className="text-[10px] font-mono">SWITCH</span>
+              </div>
+              <div 
+                draggable 
+                onDragStart={(e) => onDragStart(e, 'firewall')}
+                onClick={() => addDeviceAtCenter('firewall')}
+                className="flex flex-col items-center gap-2 p-4 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50 touch-manipulation"
+              >
+                <Shield className="w-6 h-6" />
+                <span className="text-[10px] font-mono">FIREWALL</span>
+              </div>
+              <div 
+                draggable 
+                onDragStart={(e) => onDragStart(e, 'access_point')}
+                onClick={() => addDeviceAtCenter('access_point')}
+                className="flex flex-col items-center gap-2 p-4 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50 touch-manipulation"
+              >
+                <Wifi className="w-6 h-6" />
+                <span className="text-[10px] font-mono">ACCESS PT</span>
               </div>
             </div>
           </section>
@@ -173,18 +249,56 @@ export default function App() {
               <div 
                 draggable 
                 onDragStart={(e) => onDragStart(e, 'host')}
-                className="flex flex-col items-center gap-2 p-3 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50"
+                onClick={() => addDeviceAtCenter('host')}
+                className="flex flex-col items-center gap-2 p-4 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50 touch-manipulation"
               >
-                <Monitor className="w-5 h-5" />
-                <span className="text-[9px] font-mono">HOST</span>
+                <Monitor className="w-6 h-6" />
+                <span className="text-[10px] font-mono">PC/HOST</span>
+              </div>
+              <div 
+                draggable 
+                onDragStart={(e) => onDragStart(e, 'server')}
+                onClick={() => addDeviceAtCenter('server')}
+                className="flex flex-col items-center gap-2 p-4 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50 touch-manipulation"
+              >
+                <Server className="w-6 h-6" />
+                <span className="text-[10px] font-mono">SERVER</span>
+              </div>
+              <div 
+                draggable 
+                onDragStart={(e) => onDragStart(e, 'mobile')}
+                onClick={() => addDeviceAtCenter('mobile')}
+                className="flex flex-col items-center gap-2 p-4 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50 touch-manipulation"
+              >
+                <Smartphone className="w-6 h-6" />
+                <span className="text-[10px] font-mono">MOBILE</span>
+              </div>
+              <div 
+                draggable 
+                onDragStart={(e) => onDragStart(e, 'printer')}
+                onClick={() => addDeviceAtCenter('printer')}
+                className="flex flex-col items-center gap-2 p-4 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50 touch-manipulation"
+              >
+                <Printer className="w-6 h-6" />
+                <span className="text-[10px] font-mono">PRINTER</span>
+              </div>
+              <div 
+                draggable 
+                onDragStart={(e) => onDragStart(e, 'iot')}
+                onClick={() => addDeviceAtCenter('iot')}
+                className="flex flex-col items-center gap-2 p-4 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50 touch-manipulation"
+              >
+                <Activity className="w-6 h-6" />
+                <span className="text-[10px] font-mono">IOT</span>
               </div>
               <div 
                 draggable 
                 onDragStart={(e) => onDragStart(e, 'cloud')}
-                className="flex flex-col items-center gap-2 p-3 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50"
+                onClick={() => addDeviceAtCenter('cloud')}
+                className="flex flex-col items-center gap-2 p-4 rounded border border-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] transition-all cursor-grab active:cursor-grabbing bg-white/50 touch-manipulation"
               >
-                <Cloud className="w-5 h-5" />
-                <span className="text-[9px] font-mono">CLOUD</span>
+                <Cloud className="w-6 h-6" />
+                <span className="text-[10px] font-mono">CLOUD</span>
               </div>
             </div>
           </section>
@@ -197,64 +311,99 @@ export default function App() {
         </div>
 
         <div className="p-4 border-t border-[#141414] bg-[#141414]/5 flex gap-2">
-          <button className="flex-1 px-4 py-2 bg-[#141414] text-[#E4E3E0] rounded font-mono text-[10px] uppercase hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
-            <Share2 className="w-3 h-3" /> Export
+          <button className="flex-1 px-4 py-3 bg-[#141414] text-[#E4E3E0] rounded font-mono text-[11px] uppercase hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+            <Share2 className="w-4 h-4" /> Export
           </button>
-          <button className="px-3 py-2 border border-[#141414] rounded hover:bg-[#141414]/5">
-            <Settings2 className="w-4 h-4" />
+          <button className="px-3 py-3 border border-[#141414] rounded hover:bg-[#141414]/5">
+            <Settings2 className="w-5 h-5" />
           </button>
         </div>
       </aside>
 
-      {/* Main Canvas */}
-      <main className="flex-1 relative bg-white">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onNodeClick={(_, node) => setSelectedNodeId(node.id)}
-          onPaneClick={() => setSelectedNodeId(null)}
-          nodeTypes={nodeTypes}
-          fitView
-        >
-          <Background color="#ccc" variant={"dots" as any} gap={20} size={1} />
-          <Controls />
-          
-          <Panel position="top-right" className="flex gap-2">
-            <button 
-              onClick={simulatePing}
-              className="px-6 py-2 bg-[#141414] text-[#E4E3E0] border border-[#141414] font-mono text-xs uppercase flex items-center gap-2 hover:bg-[#2a2a2a] transition-colors shadow-[4px_4px_0px_0px_rgba(20,20,20,0.2)]"
-            >
-              <Zap className="w-4 h-4 text-yellow-400" /> Run Topology Validation
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 h-full relative">
+        <header className="lg:hidden flex items-center justify-between p-4 border-b border-[#141414] bg-[#E4E3E0] z-30">
+          <div className="flex items-center gap-2">
+            <Network className="w-6 h-6 text-blue-600" />
+            <span className="font-serif italic font-bold">NetViz</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => simulatePing()} className="p-2 border border-[#141414] rounded">
+              <Zap className="w-5 h-5 text-yellow-500" />
             </button>
-          </Panel>
-        </ReactFlow>
-      </main>
+            <button onClick={() => setIsSidebarOpen(true)} className="p-2 border border-[#141414] rounded bg-[#141414] text-white">
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
+        </header>
+
+        {/* Main Canvas */}
+        <main className="flex-1 relative bg-white overflow-hidden">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onNodeClick={(_, node) => {
+              setSelectedNodeId(node.id);
+              if (window.innerWidth < 1024) setIsSidebarOpen(false);
+            }}
+            onPaneClick={() => setSelectedNodeId(null)}
+            nodeTypes={nodeTypes}
+            fitView
+            minZoom={0.2}
+            maxZoom={4}
+          >
+            <Background color="#ccc" variant={"dots" as any} gap={20} size={1} />
+            <Controls className="!bottom-4 !left-4" />
+            
+            <Panel position="top-right" className="hidden lg:flex gap-2">
+              <button 
+                onClick={simulatePing}
+                className="px-6 py-2 bg-[#141414] text-[#E4E3E0] border border-[#141414] font-mono text-xs uppercase flex items-center gap-2 hover:bg-[#2a2a2a] transition-colors shadow-[4px_4px_0px_0px_rgba(20,20,20,0.2)]"
+              >
+                <Zap className="w-4 h-4 text-yellow-400" /> Run Topology Validation
+              </button>
+            </Panel>
+          </ReactFlow>
+        </main>
+      </div>
 
       {/* Properties Panel */}
       <AnimatePresence>
         {selectedNode && (
           <motion.aside 
-            initial={{ x: 320 }}
+            initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: 320 }}
-            className="w-80 border-l border-[#141414] bg-[#E4E3E0] shadow-2xl z-20 flex flex-col"
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className={`
+              fixed lg:relative inset-y-0 right-0 w-full md:w-80 border-l border-[#141414] bg-[#E4E3E0] shadow-2xl z-[60] flex flex-col
+              ${selectedNode ? 'translate-x-0' : 'translate-x-full'}
+            `}
           >
             <div className="p-6 border-b border-[#141414] flex justify-between items-center bg-[#141414] text-[#E4E3E0]">
               <div className="flex items-center gap-2">
                 <Settings2 className="w-4 h-4 text-blue-400" />
                 <h2 className="font-serif italic text-lg tracking-tight">Layer 2/3 Config</h2>
               </div>
-              <button 
-                onClick={deleteSelected}
-                className="p-2 hover:bg-red-500/20 rounded transition-colors text-red-400"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={deleteSelected}
+                  className="p-2 hover:bg-red-500/20 rounded transition-colors text-red-400"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => setSelectedNodeId(null)}
+                  className="p-2 lg:hidden text-white/40 hover:text-white"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
             <div className="p-6 flex-1 overflow-y-auto space-y-6">
@@ -267,14 +416,14 @@ export default function App() {
                       type="text" 
                       value={selectedNode.data.label as string}
                       onChange={(e) => updateNodeData(selectedNode.id, { label: e.target.value })}
-                      className="w-full bg-white border border-[#141414] p-2 font-mono text-sm focus:shadow-[2px_2px_0px_0px_rgba(20,20,20,1)] transition-shadow outline-none"
+                      className="w-full bg-white border border-[#141414] p-3 font-mono text-sm focus:shadow-[2px_2px_0px_0px_rgba(20,20,20,1)] transition-shadow outline-none rounded-none"
                     />
                   </div>
                 </div>
               </section>
 
               <section>
-                <div className="flex justify-between items-center mb-3">
+                <div className="flex justify-between items-center mb-4">
                   <h3 className="font-serif italic text-xs uppercase opacity-40 tracking-widest">Network Interfaces</h3>
                   <button 
                     onClick={() => {
@@ -290,25 +439,26 @@ export default function App() {
                       });
                       updateNodeData(selectedNode.id, { interfaces });
                     }}
-                    className="p-1 hover:bg-[#141414]/10 border border-[#141414]/20 rounded"
+                    className="p-2 hover:bg-[#141414]/10 border border-[#141414]/20 rounded"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-4 pb-8">
                   {(selectedNode.data as any).interfaces.map((iface: DeviceInterface, index: number) => (
                     <div key={iface.id} className="p-4 border border-[#141414] bg-white space-y-3 shadow-[2px_2px_0px_0px_rgba(20,20,20,0.1)]">
-                      <div className="flex justify-between items-center text-[10px] family-mono font-bold border-b border-[#141414]/5 pb-2">
+                      <div className="flex justify-between items-center text-[10px] family-mono font-bold border-b border-[#141414]/5 pb-3">
                         <span className="italic">{iface.name}</span>
                         <span className="opacity-30">{iface.macAddress}</span>
                       </div>
                       
                       <div className="grid grid-cols-1 gap-4">
                         <div>
-                          <label className="text-[9px] font-mono uppercase opacity-50 mb-1 block">IPv4 Address</label>
+                          <label className="text-[10px] font-mono uppercase opacity-50 mb-1 block">IPv4 Address</label>
                           <input 
                             type="text" 
+                            inputMode="decimal"
                             placeholder="0.0.0.0"
                             value={iface.ip}
                             onChange={(e) => {
@@ -316,13 +466,14 @@ export default function App() {
                               interfaces[index] = { ...iface, ip: e.target.value };
                               updateNodeData(selectedNode.id, { interfaces });
                             }}
-                            className="w-full bg-[#E4E3E0]/30 border-b border-[#141414] text-xs font-mono py-1 outline-none focus:bg-white transition-colors"
+                            className="w-full bg-[#E4E3E0]/30 border-b border-[#141414] text-xs font-mono py-2 outline-none focus:bg-white transition-colors"
                           />
                         </div>
                         <div>
-                          <label className="text-[9px] font-mono uppercase opacity-50 mb-1 block">Subnet Mask</label>
+                          <label className="text-[10px] font-mono uppercase opacity-50 mb-1 block">Subnet Mask</label>
                           <input 
                             type="text" 
+                            inputMode="decimal"
                             placeholder="255.255.255.0"
                             value={iface.subnetMask}
                             onChange={(e) => {
@@ -330,7 +481,7 @@ export default function App() {
                               interfaces[index] = { ...iface, subnetMask: e.target.value };
                               updateNodeData(selectedNode.id, { interfaces });
                             }}
-                            className="w-full bg-[#E4E3E0]/30 border-b border-[#141414] text-xs font-mono py-1 outline-none focus:bg-white transition-colors"
+                            className="w-full bg-[#E4E3E0]/30 border-b border-[#141414] text-xs font-mono py-2 outline-none focus:bg-white transition-colors"
                           />
                         </div>
                       </div>
@@ -343,20 +494,21 @@ export default function App() {
                 <section>
                   <h3 className="font-serif italic text-xs uppercase opacity-40 tracking-widest mb-3">Static Routing</h3>
                   <div className="p-4 border border-[#141414] bg-white shadow-[2px_2px_0px_0px_rgba(20,20,20,0.1)]">
-                    <label className="text-[9px] font-mono uppercase opacity-50 mb-1 block">Default Gateway</label>
+                    <label className="text-[10px] font-mono uppercase opacity-50 mb-1 block">Default Gateway</label>
                     <input 
                       type="text" 
+                      inputMode="decimal"
                       placeholder="192.168.1.1"
                       value={(selectedNode.data as any).gateway || ''}
                       onChange={(e) => updateNodeData(selectedNode.id, { gateway: e.target.value })}
-                      className="w-full bg-[#E4E3E0]/30 border-b border-[#141414] text-xs font-mono py-1 outline-none"
+                      className="w-full bg-[#E4E3E0]/30 border-b border-[#141414] text-xs font-mono py-2 outline-none"
                     />
                   </div>
                 </section>
               )}
             </div>
 
-            <div className="p-4 border-t border-[#141414] bg-[#141414] text-[#E4E3E0]/40 text-[9px] font-mono flex items-center justify-between">
+            <div className="p-4 border-t border-[#141414] bg-[#141414] text-[#E4E3E0]/40 text-[10px] font-mono flex items-center justify-between mt-auto">
               <div className="flex items-center gap-2">
                 <FileCode className="w-3 h-3" />
                 <span>TERMINAL ACTIVE</span>

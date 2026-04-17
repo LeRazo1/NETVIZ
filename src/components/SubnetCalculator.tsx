@@ -33,23 +33,23 @@ export function SubnetCalculator() {
           value={ip} 
           onChange={(e) => setIp(e.target.value)} 
           placeholder="IP Address"
-          className="w-full text-[11px] font-mono border-b border-[#141414] outline-none"
+          className="w-full text-xs font-mono border-b border-[#141414] outline-none py-1"
         />
         <input 
           type="text" 
           value={mask} 
           onChange={(e) => setMask(e.target.value)} 
           placeholder="Subnet Mask"
-          className="w-full text-[11px] font-mono border-b border-[#141414] outline-none"
+          className="w-full text-xs font-mono border-b border-[#141414] outline-none py-1"
         />
         
         {results && (
           <div className="mt-2 pt-2 border-t border-[#141414]/5 space-y-1">
-            <div className="flex justify-between text-[10px] font-mono">
+            <div className="flex justify-between text-[11px] font-mono">
               <span className="opacity-50 uppercase">Network:</span>
               <span className="font-bold">{results.network}</span>
             </div>
-            <div className="flex justify-between text-[10px] font-mono">
+            <div className="flex justify-between text-[11px] font-mono">
               <span className="opacity-50 uppercase">Broadcast:</span>
               <span className="font-bold">{results.broadcast}</span>
             </div>
